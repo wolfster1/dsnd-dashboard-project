@@ -11,9 +11,15 @@ from pathlib import Path
 # inside the assets directory
 #### YOUR CODE HERE
 
+from pathlib import Path
+import pickle
+
+# Path to root of the project
+ROOT_DIR = Path(__file__).resolve().parents[1]
+
+# Path to model.pkl file
+MODEL_PATH = ROOT_DIR / "models" / "model.pkl"
+
 def load_model():
-
-    with model_path.open('rb') as file:
-        model = pickle.load(file)
-
-    return model
+    with open(MODEL_PATH, "rb") as f:
+        return pickle.load(f)
