@@ -64,3 +64,54 @@
                     GROUP BY employee_id
                    )
                 """
+
+#### team.py was updated with my code below
+
+# Import the QueryBase class
+from report.src.sql_base import QueryBase
+
+# Import dependencies for SQL execution
+from report.src.sql_execution import execute_query, execute_dataframe
+
+# Create a subclass of QueryBase called `Team`
+class Team(QueryBase):
+
+    # Set the class attribute `name` to the string "team"
+    name = "team"
+
+    # Define a `names` method that receives no arguments
+    # and returns a list of tuples from an SQL execution
+    def names(self):
+        # Query 5: Select team_name and team_id from all teams
+        query = f"""
+            SELECT team_name, team_id
+            FROM {self.name}
+        """
+        return execute_query(query)
+
+    # Define a `username` method that receives an ID argument
+    # and returns a list of tuples from an SQL execution
+    def username(self, id):
+        # Query 6: Select team_name where team_id matches
+        query = f"""
+            SELECT team_name
+            FROM {self.name}
+            WHERE {self.name}_id = {id}
+        """
+        return execute_query(query)
+
+    # Use a dataframe execution method to return ML-ready data
+    def model_data(self, id):
+        query = f"""
+            SELECT positive_events, negative_events FROM (
+                SELECT employee_id,
+                       SUM(positive_events) AS positive_events,
+                       SUM(negative_events) AS negative_events
+                FROM {self.name}
+                JOIN employee_events
+                    USING({self.name}_id)
+                WHERE {self.name}.{self.name}_id = {id}
+                GROUP BY employee_id
+            )
+        """
+        return execute_dataframe(query)
