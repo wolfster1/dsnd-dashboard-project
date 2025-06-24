@@ -11,6 +11,8 @@ from pathlib import Path
 # inside the assets directory
 #### YOUR CODE HERE
 
+#### Added full code below  John
+
 from pathlib import Path
 import pickle
 
