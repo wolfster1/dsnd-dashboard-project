@@ -3,7 +3,7 @@
 
 This repository contains starter code for the **Software Engineering for Data Scientists** final project. Please reference your course materials for documentation on this repository's structure and important files. Happy coding!
 
-Making a change to ensure readme is syncing
+Added code to allow for shift filtering in the dashboard. 
 
 ### Repository Structure
 ```
