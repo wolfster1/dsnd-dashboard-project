@@ -2,7 +2,7 @@ import sqlite3
 import matplotlib.pyplot as plt
 import numpy as np
 
-# --- Base and Mixin Classes (unchanged) ---
+# --- Base and Mixin Classes ---
 class DatabaseConnection:
     def __init__(self, db_name):
         self.db_name = db_name
@@ -26,17 +26,38 @@ class QueryMixin:
 
 # --- Dashboard Class ---
 class Dashboard(DatabaseConnection, QueryMixin):
-    def __init__(self, db_name, view_mode="employee"):
+    def __init__(self, db_name, view_mode="employee", shift=None):
         super().__init__(db_name)
         self.connect()
-        self.view_mode = view_mode  # Determines title: "employee" or "team"
+        self.view_mode = view_mode    # View mode: "employee" or "team"
+        self.shift = shift            # Optional shift filter: "day", "night", etc.
 
     def fetch_performance_data(self):
-        query = "SELECT name, performance_score FROM employee_performance"
-        return self.execute_query(query)
+        base_query = """
+            SELECT 
+                e.first_name || ' ' || e.last_name AS full_name,
+                SUM(ev.positive_events) - SUM(ev.negative_events) AS performance_score
+            FROM employee e
+            JOIN employee_events ev ON e.employee_id = ev.employee_id
+        """
+
+        filters = []
+        if self.shift:
+            filters.append(f"e.shift = '{self.shift}'")
+
+        where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
+        group_order_clause = "GROUP BY e.employee_id ORDER BY performance_score DESC"
+
+        full_query = f"{base_query} {where_clause} {group_order_clause}"
+        return self.execute_query(full_query)
 
     def generate_performance_plot(self):
         data = self.fetch_performance_data()
+
+        if not data:
+            print("No performance data available for the selected filter.")
+            return
+
         names, scores = zip(*data)
 
         # Color scale from red (low) to green (high)
@@ -46,7 +67,9 @@ class Dashboard(DatabaseConnection, QueryMixin):
         plt.figure(figsize=(10, 6))
         plt.barh(names, scores, color=colors)
         plt.xlabel("Performance Score")
-        title = "Employee Performance" if self.view_mode == "employee" else "Team Performance"
+        title = f"{'Employee' if self.view_mode == 'employee' else 'Team'} Performance"
+        if self.shift:
+            title += f" - {self.shift.capitalize()} Shift"
         plt.title(title)
         plt.tight_layout()
         plt.show()
@@ -56,5 +79,6 @@ class Dashboard(DatabaseConnection, QueryMixin):
 
 # --- Usage ---
 if __name__ == "__main__":
-    dashboard = Dashboard("employee_events_db.db", view_mode="team")  # Try "employee" or "team"
+    # Choose view_mode="employee" or "team", and optionally set shift="day", "night", etc.
+    dashboard = Dashboard("employee_events.db", view_mode="employee", shift="night")
     dashboard.generate_performance_plot()
